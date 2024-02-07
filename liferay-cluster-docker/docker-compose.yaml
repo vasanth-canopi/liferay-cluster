@@ -1,0 +1,116 @@
+version: '3.3'
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile.nginx
+    links:
+      - liferay-node-1
+      - liferay-node-2
+    ports:
+      - '80:80'
+      - '443:443'
+  liferay-node-1:
+    container_name: liferay-node-1
+    build:
+      context: .
+      dockerfile: Dockerfile.liferay
+    ports:
+      - '8001:8080'
+      - '11311:11311'
+    hostname: liferay-node-1.local
+    environment:
+      DATABASE_HOST: "postgres"
+      DATABASE_NAME: "lportal"
+      DATABASE_USERNAME: "liferay"
+      DATABASE_PASSWORD: "passw0rd"
+      SESSION_REDIS_HOST: "redis"
+      ELASTICSEARCH_REST_HOST: "elasticsearch"
+      ELASTICSEARCH_NODE_HOST: "elasticsearch"
+      JAVA_OPTS: "-Xmx4g"
+    volumes:
+      - liferay-document-library:/opt/liferay/data/document_library
+#      - ./deploy/node-1:/opt/liferay/deploy
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+  liferay-node-2:
+    container_name: liferay-node-2
+    build:
+      context: .
+      dockerfile: Dockerfile.liferay
+    ports:
+      - '8002:8080'
+      - '11312:11311'
+    hostname: liferay-node-2.local
+    environment:
+      DATABASE_HOST: "postgres"
+      DATABASE_NAME: "lportal"
+      DATABASE_USERNAME: "liferay"
+      DATABASE_PASSWORD: "passw0rd"
+      SESSION_REDIS_HOST: "redis"
+      ELASTICSEARCH_REST_HOST: "elasticsearch"
+      ELASTICSEARCH_NODE_HOST: "elasticsearch"
+      JAVA_OPTS: "-Xms1024m -Xmx4026m"
+    volumes:
+      - liferay-document-library:/opt/liferay/data/document_library
+#      - ./deploy/node-1:/opt/liferay/deploy
+    depends_on:
+      - postgres
+      - redis
+      - elasticsearch
+      - liferay-node-1
+  postgres:
+    image: postgres:11-alpine
+    container_name: postgres
+    environment:
+      - POSTGRES_PASSWORD=passw0rd
+      - POSTGRES_USER=liferay
+      - POSTGRES_DB=lportal
+#      - POSTGRES_INITDB_ARGS="--auth-host=md5 --auth-local=md5"
+      - TZ=Asia/Kolkata
+    ports:
+      - "5432:5432"
+  redis:
+    image: redis:5
+    container_name : redis
+    ports:
+      - '6379:6379'
+  elasticsearch:
+    build:
+      context: .
+      dockerfile: Dockerfile.elasticsearch
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - cluster.name=LiferayElasticsearchCluster
+      - bootstrap.memory_lock=false
+#      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - node.store.allow_mmap=false 
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+  pgadmin:
+    image: dpage/pgadmin4:7.2
+    container_name: pg_admin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: vasanth@canopi.in
+      PGADMIN_DEFAULT_PASSWORD: canopi_2023
+#    volumes:
+#      - pgadmin-data:/var/lib/pgadmin
+#      - ./backup:/backups
+#      - ./config.py:/pgadmin4/config.py
+    ports:
+      - 8090:80
+
+volumes:
+  esdata1:
+  liferay-document-library:

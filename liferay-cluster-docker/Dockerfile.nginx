@@ -1,0 +1,9 @@
+FROM nginx:1.12
+
+RUN mkdir -p /etc/nginx/ssl
+
+COPY ./nginx_conf/nginx/ssl/canopi.local.pem /etc/nginx/ssl/canopi.local.pem
+COPY ./nginx_conf/nginx/ssl/canopi.local-key.pem /etc/nginx/ssl/canopi.local-key.pem
+
+COPY ./nginx_conf/nginx/nginx.conf /etc/nginx/nginx.conf
+
