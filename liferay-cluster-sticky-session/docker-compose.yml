@@ -1,0 +1,85 @@
+version: '3.3'
+services:
+  liferay-portal-node-1:
+    build:
+      context: .
+      dockerfile: Dockerfile-liferay
+    ports:
+      - '6080:8080'
+      - '21311:11311'
+    hostname: liferay-portal-node-1.local
+    volumes:
+      - lfr-dl-volume:/opt/liferay/data/document_library
+      - ./deploy/portal-node-1:/opt/liferay/deploy
+    depends_on:
+      - postgres
+      - es-node-1
+  liferay-portal-node-2:
+    build:
+      context: .
+      dockerfile: Dockerfile-liferay
+    ports:
+      - '7080:8080'
+      - '31311:11311'
+    hostname: liferay-portal-node-2.local
+    volumes:
+      - lfr-dl-volume:/opt/liferay/data/document_library
+      - ./deploy/portal-node-2:/opt/liferay/deploy
+    depends_on:
+      - postgres
+      - liferay-portal-node-1
+      - es-node-1
+  postgres:
+    image: postgres:14.8-bullseye
+    ports:
+      - 5432:5432
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_USER=liferay
+      - POSTGRES_DB=lportal
+      - TZ='Asia/Kolkata'
+  es-node-1:
+    build:
+      context: .
+      dockerfile: Dockerfile-elasticsearch
+    container_name: elasticsearch
+    environment:
+      - node.name=elasticsearch
+      - discovery.type=single-node
+      - cluster.name=elasticsearch
+      - bootstrap.memory_lock=false
+#      - "ES_JAVA_OPTS=-Xms1g -Xmx1g"
+      - xpack.security.enabled=false
+      - node.store.allow_mmap=false 
+    volumes:
+      - esdata1:/usr/share/elasticsearch/data
+    ports:
+      - 9200:9200
+      - 9300:9300
+  pgadmin:
+    image: dpage/pgadmin4:7.2
+    container_name: pg_admin
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: vasanth@canopi.in
+      PGADMIN_DEFAULT_PASSWORD: canopi_2023
+#    volumes:
+#      - pgadmin-data:/var/lib/pgadmin
+#      - ./backup:/backups
+#      - ./config.py:/pgadmin4/config.py
+    ports:
+      - 8090:80
+  haproxy:
+    build:
+      context: .
+      dockerfile: Dockerfile-haproxy
+    ports:
+      - '80:80'
+    hostname: lb-haproxy.local
+volumes:
+  lfr-dl-volume:
+  esdata1:

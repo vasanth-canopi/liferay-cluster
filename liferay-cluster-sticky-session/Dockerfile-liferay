@@ -1,0 +1,21 @@
+FROM liferay/portal:7.1.2-ga3
+
+USER root
+
+RUN mkdir -p /etc/liferay/mount/files/
+
+COPY ./configs/portal-ext.properties $LIFERAY_HOME/
+COPY ./configs/*.config $LIFERAY_HOME/osgi/configs/
+COPY ./configs/*.jar $LIFERAY_HOME/osgi/portal/
+COPY ./configs/setenv.sh $LIFERAY_HOME/tomcat-9.0.10/bin/
+
+RUN mkdir -p /etc/liferay/mount/files/tomcat-9.0.10/lib/ext
+
+COPY ./tomcat-libs/*.jar /etc/liferay/mount/files/tomcat-9.0.10/lib/ext
+
+
+RUN apk update
+RUN apk add postgresql-client htop
+
+RUN chown -R liferay:liferay /opt/liferay
+USER liferay
