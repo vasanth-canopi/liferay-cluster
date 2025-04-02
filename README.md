@@ -54,7 +54,7 @@ docker compose up -d
 ## 4. Session Affinity on Kubernetes
 ### (HAProxy sticky session solution won't work for kubernetes env)
 
-### Note : Redis Session Management (Jedis for liferay) would be an idle way for session sharing issue on kubernetes env
+### Note : Redis Session Management (Jedis for liferay) would be an ideal way for session sharing issue on kubernetes env
 
 <https://stackoverflow.com/questions/48993286/is-it-possible-to-route-traffic-to-a-specific-pod?rq=1>
 
